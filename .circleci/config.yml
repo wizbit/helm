@@ -1,39 +1,26 @@
----
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
-
 jobs:
   build:
-    working_directory: ~/helm.sh/helm
     docker:
-      - image: circleci/golang:1.14
-        auth:
-          username: $DOCKER_USER
-          password: $DOCKER_PASS
+      # specify the version
+      - image: circleci/golang:1.9
 
-    environment:
-      GOCACHE: "/tmp/go/cache"
-      GOLANGCI_LINT_VERSION: "1.27.0"
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
 
+    #### TEMPLATE_NOTE: go expects specific checkout path representing url
+    #### expecting it in the form of
+    ####   /go/src/github.com/circleci/go-tool
+    ####   /go/src/bitbucket.org/circleci/go-tool
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
-      - run:
-          name: install test dependencies
-          command: .circleci/bootstrap.sh
-      - run:
-          name: test style
-          command: make test-style
-      - run:
-          name: test
-          command: make test-coverage
-      - deploy:
-          name: deploy
-          command: .circleci/deploy.sh
 
-workflows:
-  version: 2
-  build:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /.*/
+      # specify any bash command here prefixed with `run: `
+      - run: go get -v -t -d ./...
+      - run: go test -v ./...
